@@ -24,7 +24,7 @@ contract SimpleStaking {
     event TokensUnstaked(address to, uint256 amount);
 
     constructor(IERC20 erc20ContractAddress) {
-        require(address(erc20ContractAddress) != address(0), "ERC20 contract address can not be zero");
+        require(address(erc20ContractAddress) != address(0), "ERC20 contract address can not be zero.");
         owner = msg.sender;
         erc20Contract = erc20ContractAddress;
     }
