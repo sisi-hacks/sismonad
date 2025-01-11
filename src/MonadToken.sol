@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract MonadToken is ERC20 {
+contract MeownadToken is ERC20 {
     uint32 internal constant WINDOW = 2 days;
     uint256 public constant FAUCET_DRIP = 200e18;
     uint256 public constant FAUCET_LIMIT = 1_000_000e18;
@@ -13,7 +13,7 @@ contract MonadToken is ERC20 {
     error OverLimit();
     error WindowNotElapsed();
 
-    constructor()  ERC20("MonadToken", "MK") { }
+    constructor()  ERC20("Meownad Token", "MN") { }
 
     function mint() public {
         if ((block.timestamp - lastMintTime[msg.sender]) < WINDOW) revert WindowNotElapsed();

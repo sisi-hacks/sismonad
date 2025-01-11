@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: MIT
+ // SPDX-License-Identifier: MIT
 // WARNING this contract has not been independently tested or audited
 // DO NOT use this contract with funds of real value until officially tested and audited by an independent expert or group
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract SimpleStaking {
+contract SimpleStaking is ERC20 {
     using SafeERC20 for IERC20;
 
     IERC20 public erc20Contract;
@@ -23,7 +24,7 @@ contract SimpleStaking {
     event TokensStaked(address from, uint256 amount);
     event TokensUnstaked(address to, uint256 amount);
 
-    constructor(IERC20 erc20ContractAddress) {
+    constructor (IERC20 erc20ContractAddress) ERC20 ("Staked Meownad", "sMN") {
         require(address(erc20ContractAddress) != address(0), "ERC20 contract address can not be zero.");
         owner = msg.sender;
         erc20Contract = erc20ContractAddress;
@@ -60,28 +61,23 @@ contract SimpleStaking {
         stakingPeriod += _stakingPeriodInSeconds;
     }
 
+    /// @dev Tokens are minted on a 1:1 ratio.
     function stakeTokens(uint256 amount) public timestampIsSet noReentrant {
         require(amount <= erc20Contract.balanceOf(msg.sender), "Not enough tokens in your wallet.");
         balances[msg.sender] += amount;
         erc20Contract.safeTransferFrom(msg.sender, address(this), amount);
-        // @todo Mint some portion of stake tokens to the sender.
+        _mint(msg.sender, amount);
         emit TokensStaked(msg.sender, amount);
     }
 
-    // @todo There should be a burn mechanism for minted stake tokens.
-    function unstakeTokens(uint256 amount) public timestampIsSet noReentrant {
-        // @todo Burn the amount of stake tokens the user received.
-        // @todo Retrieve the amount of their staked tokens.
-        // _unstake(amount of their staked tokens);
-    }
-
-    function _unstake(uint256 amount) internal {
-        require(balances[msg.sender] >= amount, "Insufficient token balance.");
+    function unstakeTokens(uint256 smnAmount) internal {
+        require(balances[msg.sender] >= smnAmount, "Insufficient token balance.");
         require(block.timestamp >= stakingPeriod, "Tokens are only available after correct time period has elapsed");
         
-        balances[msg.sender] -= amount;
-        erc20Contract.safeTransfer(msg.sender, amount);
-        emit TokensUnstaked(msg.sender, amount);
+        _burn(msg.sender, smnAmount);
+        balances[msg.sender] -= smnAmount;
+        erc20Contract.safeTransfer(msg.sender, smnAmount);
+        emit TokensUnstaked(msg.sender, smnAmount);
     }
 
     /// @dev Transfer accidentally locked ERC20 tokens.
