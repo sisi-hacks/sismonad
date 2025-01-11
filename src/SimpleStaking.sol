@@ -2,7 +2,7 @@
 // WARNING this contract has not been independently tested or audited
 // DO NOT use this contract with funds of real value until officially tested and audited by an independent expert or group
 
-pragma solidity 0.8.11;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -30,7 +30,7 @@ contract SimpleStaking {
     }
 
     modifier noReentrant() {
-        require(!locked, "No re-entrancy");
+        require(!locked, "No re-entrancy.");
         locked = true;
         _;
         locked = false;
@@ -57,16 +57,13 @@ contract SimpleStaking {
     function setTimestamp(uint256 _stakingPeriodInSeconds) public onlyOwner timestampNotSet  {
         timestampSet = true;
         initialTimestamp = block.timestamp;
-        stakingPeriod = initialTimestamp.add(_stakingPeriodInSeconds);
+        stakingPeriod += _stakingPeriodInSeconds;
     }
 
-    /// @dev Allows the contract owner to allocate official ERC20 tokens to each future recipient (only one at a time).
-    /// @param token, the official ERC20 token which this contract exclusively accepts.
-    /// @param amount to allocate to recipient.
     function stakeTokens(uint256 amount) public timestampIsSet noReentrant {
-        require(amount <= token.balanceOf(msg.sender), "Not enough tokens in your wallet.");
+        require(amount <= erc20Contract.balanceOf(msg.sender), "Not enough tokens in your wallet.");
         balances[msg.sender] += amount;
-        token.safeTransferFrom(msg.sender, address(this), amount);
+        erc20Contract.safeTransferFrom(msg.sender, address(this), amount);
         // @todo Mint some portion of stake tokens to the sender.
         emit TokensStaked(msg.sender, amount);
     }
@@ -78,15 +75,12 @@ contract SimpleStaking {
         // _unstake(amount of their staked tokens);
     }
 
-    /// @dev Allows user to unstake tokens after the correct time period has elapsed
-    /// @param token - address of the official ERC20 token which is being unlocked here.
-    /// @param amount - the amount to unlock (in wei)
     function _unstake(uint256 amount) internal {
         require(balances[msg.sender] >= amount, "Insufficient token balance.");
         require(block.timestamp >= stakingPeriod, "Tokens are only available after correct time period has elapsed");
         
         balances[msg.sender] -= amount;
-        token.safeTransfer(msg.sender, amount);
+        erc20Contract.safeTransfer(msg.sender, amount);
         emit TokensUnstaked(msg.sender, amount);
     }
 
